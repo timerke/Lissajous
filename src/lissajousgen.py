@@ -23,14 +23,16 @@ class Lissajous_generator:
 
         self._resolution = resolution
 
-    def generate_figure(self, freq_x: float, freq_y: float) -> Lissajous_figure:
+    def generate_figure(self, freq_x: float, freq_y: float,
+                        phase_shift: float) -> Lissajous_figure:
         """Метод генерирует фигуру (массивы x и y координат точек) с заданными
         частотами.
         :param freq_x: частота колебаний по оси x;
-        :param freq_y: частота колебаний по оси y.
+        :param freq_y: частота колебаний по оси y;
+        :param phase_shift: сдвиг фаз колебаний по осям x и y.
         :return: фигура Лиссажу - объект класса."""
 
         t = np.linspace(0, 2 * np.pi, self._resolution)
-        x = np.sin(freq_x * t)
-        y = np.cos(freq_y * t)
+        x = np.sin(freq_x * t + phase_shift)
+        y = np.sin(freq_y * t)
         return Lissajous_figure(x, y)

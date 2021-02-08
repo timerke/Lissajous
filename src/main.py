@@ -16,6 +16,7 @@ DEFAULT_SETTINGS = {
     'freq_x': 2,
     'freq_y': 3,
     'resolution': 100,
+    'phase_shift': 0,
     'color': 'midnightblue',
     'width': 2
 }
@@ -51,17 +52,25 @@ class Lissajous_window(qt.QWidget):
 
         # Создаем макет формы
         form_layout = qt.QFormLayout()
-        # Поле для частоты по оси x. В поле можно вводить вещественные числа
+        # Поле для частоты колебаний по оси x. В поле можно вводить
+        # вещественные числа
         self.freq_x_lineedit = qt.QLineEdit()
         self.freq_x_lineedit.setText(str(DEFAULT_SETTINGS['freq_x']))
         validator = QtGui.QRegExpValidator(QtCore.QRegExp('[0-9]*[\.]?[0-9]*'))
         self.freq_x_lineedit.setValidator(validator)
         form_layout.addRow(qt.QLabel('Частота X'), self.freq_x_lineedit)
-        # Поле для частоты по оси y. В поле можно вводить вещественные числа
+        # Поле для частоты колебаний по оси y. В поле можно вводить
+        # вещественные числа
         self.freq_y_lineedit = qt.QLineEdit()
         self.freq_y_lineedit.setText(str(DEFAULT_SETTINGS['freq_y']))
         self.freq_y_lineedit.setValidator(validator)
         form_layout.addRow(qt.QLabel('Частота Y'), self.freq_y_lineedit)
+        # Поле для сдвига фаз колебаний по осям x и y. В поле можно вводить
+        # вещественные числа
+        self.phase_shift_lineedit = qt.QLineEdit()
+        self.phase_shift_lineedit.setText(str(DEFAULT_SETTINGS['phase_shift']))
+        self.phase_shift_lineedit.setValidator(validator)
+        form_layout.addRow(qt.QLabel('Сдвиг фаз'), self.phase_shift_lineedit)
         # Поле для количества точек кривой. В поле можно вводить целые числа
         self.resolution_lineedit = qt.QLineEdit()
         self.resolution_lineedit.setText(str(DEFAULT_SETTINGS['resolution']))
@@ -127,7 +136,8 @@ class Lissajous_window(qt.QWidget):
         # Генерируем сигнал для построения
         self.generator = Lissajous_generator(settings['resolution'])
         figure = self.generator.generate_figure(settings['freq_x'],
-                                                settings['freq_y'])
+                                                settings['freq_y'],
+                                                settings['phase_shift'])
         # Строим график
         self._ax.plot(figure.x_arr, figure.y_arr,
                       color=settings['color'], linewidth=settings['width'])
@@ -144,6 +154,7 @@ class Lissajous_window(qt.QWidget):
         settings = {}
         settings['freq_x'] = float(self.freq_x_lineedit.text())
         settings['freq_y'] = float(self.freq_y_lineedit.text())
+        settings['phase_shift'] = float(self.phase_shift_lineedit.text())
         settings['resolution'] = int(self.resolution_lineedit.text())
         settings['color'] = COLOR_DICT[self.color_combobox.currentText()]
         settings['width'] = int(self.width_combobox.currentText())
