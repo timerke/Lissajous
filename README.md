@@ -1,4 +1,5 @@
 # Lissajous
+[![Build Status](https://travis-ci.com/timerke/Lissajous.svg?branch=main)](https://travis-ci.com/timerke/Lissajous)
 
 Генератор фигур Лиссажу с графическим интерфейсом.
 
