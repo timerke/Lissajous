@@ -1,196 +1,166 @@
 import json
 import os
 import sys
+from typing import Dict, Union
 import matplotlib.pyplot as plt
-import numpy as np
 import PyQt5.QtWidgets as qt
 from matplotlib.backends.backend_qt5agg import FigureCanvas
 from PyQt5 import QtCore, QtGui
-from lissajousgen import Lissajous_figure, Lissajous_generator
+from lissajousgen import LissajousGenerator
+from version import VERSION
+
 
 # Путь к директории с исходным кодом
 DIR = os.path.dirname(os.path.realpath(__file__))
 
 # Настройки фигуры по умолчанию
-DEFAULT_SETTINGS = {
-    'freq_x': 2,
-    'freq_y': 3,
-    'resolution': 100,
-    'phase_shift': 0,
-    'color': 'midnightblue',
-    'width': 2
-}
+DEFAULT_SETTINGS = {"freq_x": 2,
+                    "freq_y": 3,
+                    "resolution": 100,
+                    "phase_shift": 0,
+                    "color": "midnightblue",
+                    "width": 2}
 
 # Цвета для matplotlib
-with open(os.path.join(DIR, 'mpl.json'), mode='r', encoding='utf-8') as f:
-    COLOR_DICT = json.load(f)
+with open(os.path.join(DIR, "mpl.json"), mode="r", encoding="utf-8") as file:
+    COLOR_DICT = json.load(file)
 
 
-class Lissajous_window(qt.QWidget):
-    """Класс для главного окна приложения."""
+class LissajousWindow(qt.QWidget):
+    """
+    Класс для главного окна приложения.
+    """
 
-    def __init__(self):
-
+    def __init__(self) -> None:
         super().__init__()
-
-        # Ставим версию и иконку
-        filename = os.path.join(DIR, 'version.txt')
-        with open(filename, 'r') as f:
-            version = f.readline()
-        self.setWindowTitle(f'Генератор фигур Лиссажу. Версия {version}. '
-                            f'CC BY-SA 4.0 Ivanov')
-        filename = os.path.join(DIR, 'icon.bmp')
-        self.setWindowIcon(QtGui.QIcon(filename))
-        # Создаем графический интерфейс
-        self.init_ui()
-        # Строим фигуру с настройками по умолчанию
+        self._generator: LissajousGenerator = LissajousGenerator()
+        self._init_ui()
         self.plot_lissajous_figure()
 
     def _create_form_layout(self):
-        """Метод создает форму с полями, регулирующими фигуру Лиссажу.
-        :return: форма с полями."""
+        """
+        Метод создает форму с полями, регулирующими фигуру Лиссажу.
+        :return: форма с полями.
+        """
 
-        # Создаем макет формы
         form_layout = qt.QFormLayout()
-        # Поле для частоты колебаний по оси x. В поле можно вводить
-        # вещественные числа
-        self.freq_x_lineedit = qt.QLineEdit()
-        self.freq_x_lineedit.setText(str(DEFAULT_SETTINGS['freq_x']))
-        validator = QtGui.QRegExpValidator(QtCore.QRegExp('[0-9]*[\.]?[0-9]*'))
-        self.freq_x_lineedit.setValidator(validator)
-        form_layout.addRow(qt.QLabel('Частота X'), self.freq_x_lineedit)
-        # Поле для частоты колебаний по оси y. В поле можно вводить
-        # вещественные числа
-        self.freq_y_lineedit = qt.QLineEdit()
-        self.freq_y_lineedit.setText(str(DEFAULT_SETTINGS['freq_y']))
-        self.freq_y_lineedit.setValidator(validator)
-        form_layout.addRow(qt.QLabel('Частота Y'), self.freq_y_lineedit)
-        # Поле для сдвига фаз колебаний по осям x и y. В поле можно вводить
-        # вещественные числа
-        self.phase_shift_lineedit = qt.QLineEdit()
-        self.phase_shift_lineedit.setText(str(DEFAULT_SETTINGS['phase_shift']))
-        self.phase_shift_lineedit.setValidator(validator)
-        form_layout.addRow(qt.QLabel('Сдвиг фаз'), self.phase_shift_lineedit)
-        # Поле для количества точек кривой. В поле можно вводить целые числа
-        self.resolution_lineedit = qt.QLineEdit()
-        self.resolution_lineedit.setText(str(DEFAULT_SETTINGS['resolution']))
-        validator = QtGui.QRegExpValidator(QtCore.QRegExp('[1-9][0-9]*'))
-        self.resolution_lineedit.setValidator(validator)
-        form_layout.addRow(qt.QLabel('Количество точек'),
-                           self.resolution_lineedit)
-        # Поле для цвета линии
+        self.line_edit_freq_x: qt.QLineEdit = qt.QLineEdit()
+        self.line_edit_freq_x.setText(str(DEFAULT_SETTINGS["freq_x"]))
+        validator = QtGui.QRegExpValidator(QtCore.QRegExp(r"[0-9]*[\.]?[0-9]*"))
+        self.line_edit_freq_x.setValidator(validator)
+        form_layout.addRow(qt.QLabel("Частота X"), self.line_edit_freq_x)
+
+        self.line_edit_freq_y: qt.QLineEdit = qt.QLineEdit()
+        self.line_edit_freq_y.setText(str(DEFAULT_SETTINGS["freq_y"]))
+        self.line_edit_freq_y.setValidator(validator)
+        form_layout.addRow(qt.QLabel("Частота Y"), self.line_edit_freq_y)
+
+        self.line_edit_phase_shift: qt.QLineEdit = qt.QLineEdit()
+        self.line_edit_phase_shift.setText(str(DEFAULT_SETTINGS["phase_shift"]))
+        self.line_edit_phase_shift.setValidator(validator)
+        form_layout.addRow(qt.QLabel("Сдвиг фаз"), self.line_edit_phase_shift)
+
+        self.line_edit_resolution: qt.QLineEdit = qt.QLineEdit()
+        self.line_edit_resolution.setText(str(DEFAULT_SETTINGS["resolution"]))
+        validator = QtGui.QRegExpValidator(QtCore.QRegExp("[1-9][0-9]*"))
+        self.line_edit_resolution.setValidator(validator)
+        form_layout.addRow(qt.QLabel("Количество точек"), self.line_edit_resolution)
+
         self.color_combobox = qt.QComboBox()
         self.color_combobox.addItems(COLOR_DICT.keys())
-        color = ''
+        color = ""
         for key, value in COLOR_DICT.items():
-            if value == DEFAULT_SETTINGS['color']:
+            if value == DEFAULT_SETTINGS["color"]:
                 color = key
                 break
         self.color_combobox.setCurrentText(color)
-        form_layout.addRow(qt.QLabel('Цвет линии'), self.color_combobox)
-        # Поле для толщины линии
-        self.width_combobox = qt.QComboBox()
-        self.width_combobox.addItems(('1', '2', '3', '4'))
-        self.width_combobox.setCurrentText(str(DEFAULT_SETTINGS['width']))
-        form_layout.addRow(qt.QLabel('Толщина линии'), self.width_combobox)
-        #
-        group = qt.QGroupBox('Параметры фигуры Лиссажу')
+        form_layout.addRow(qt.QLabel("Цвет линии"), self.color_combobox)
+
+        self.combobox_width = qt.QComboBox()
+        self.combobox_width.addItems(list(map(str, range(1, 5))))
+        self.combobox_width.setCurrentText(str(DEFAULT_SETTINGS["width"]))
+        form_layout.addRow(qt.QLabel("Толщина линии"), self.combobox_width)
+
+        group = qt.QGroupBox("Параметры фигуры Лиссажу")
         group.setLayout(form_layout)
         return group
 
-    def init_ui(self):
-        """Метод располагает виджеты на главном окне."""
+    def _init_ui(self) -> None:
+        """
+        Метод располагает виджеты на главном окне.
+        """
 
-        # Кнопки
-        plot_button = qt.QPushButton('Обновить фигуру')
-        plot_button.clicked.connect(self.plot_button_click_handler)
-        save_button = qt.QPushButton('Сохранить фигуру')
-        save_button.clicked.connect(self.save_button_click_handler)
+        self.setWindowTitle(f"Генератор фигур Лиссажу. Версия {VERSION}")
+        self.setWindowIcon(QtGui.QIcon(os.path.join(DIR, "icon.bmp")))
 
-        # Добавляем форму и кнопки в вертикальный макет, который располагается
-        # справа
-        vbox = qt.QVBoxLayout()
-        vbox.addWidget(self._create_form_layout())
-        vbox.addWidget(plot_button)
-        vbox.addWidget(save_button)
-        vbox.addStretch(1)
+        self.button_plot: qt.QPushButton = qt.QPushButton("Обновить фигуру")
+        self.button_plot.clicked.connect(self.handle_click_on_button_plot)
+        self.button_save: qt.QPushButton = qt.QPushButton("Сохранить фигуру")
+        self.button_save.clicked.connect(self.handle_click_on_button_save)
 
-        # Создаем холст matplotlib
+        v_box = qt.QVBoxLayout()
+        v_box.addWidget(self._create_form_layout())
+        v_box.addWidget(self.button_plot)
+        v_box.addWidget(self.button_save)
+        v_box.addStretch(1)
+
         self._fig = plt.figure(figsize=(4, 3), dpi=72)
-        # Добавляем на холст matplotlib область для построения графиков
         self._ax = self._fig.add_subplot(1, 1, 1)
-        # Создаем qt-виджет холста для встраивания холста matplotlib fig в окно
-        self._fc = FigureCanvas(self._fig)
-        self._fc.setParent(self)
+        self._canvas: FigureCanvas = FigureCanvas(self._fig)
+        self._canvas.setParent(self)
 
-        hbox = qt.QHBoxLayout()
-        hbox.addWidget(self._fc, 1)
-        hbox.addLayout(vbox)
-        self.setLayout(hbox)
+        h_box = qt.QHBoxLayout()
+        h_box.addWidget(self._canvas, 1)
+        h_box.addLayout(v_box)
+        self.setLayout(h_box)
 
-    def plot_lissajous_figure(self, settings=DEFAULT_SETTINGS):
-        """Метод рисует фигуру Лиссажу."""
+    @QtCore.pyqtSlot()
+    def handle_click_on_button_plot(self) -> None:
+        """
+        Обработчик нажатия на кнопку 'Обновить фигуру'.
+        """
 
-        # Удаляем устаревшие данные с графика
-        self._ax.clear()
-        # Генерируем сигнал для построения
-        self.generator = Lissajous_generator(settings['resolution'])
-        figure = self.generator.generate_figure(settings['freq_x'],
-                                                settings['freq_y'],
-                                                settings['phase_shift'])
-        # Строим график
-        self._ax.plot(figure.x_arr, figure.y_arr,
-                      color=settings['color'], linewidth=settings['width'])
-        plt.axis('off')
-        # Нужно, чтобы все элементы не выходили за пределы холста
-        plt.tight_layout()
-        # Обновляем холст в окне
-        self._fc.draw()
-
-    def plot_button_click_handler(self):
-        """Обработчик нажатия на кнопку 'Обновить фигуру'."""
-
-        # Получаем данные из текстовых полей
-        settings = {}
-        settings['freq_x'] = float(self.freq_x_lineedit.text())
-        settings['freq_y'] = float(self.freq_y_lineedit.text())
-        settings['phase_shift'] = float(self.phase_shift_lineedit.text())
-        settings['resolution'] = int(self.resolution_lineedit.text())
-        settings['color'] = COLOR_DICT[self.color_combobox.currentText()]
-        settings['width'] = int(self.width_combobox.currentText())
-        # Перестраиваем график
+        settings = {"freq_x": float(self.line_edit_freq_x.text()),
+                    "freq_y": float(self.line_edit_freq_y.text()),
+                    "phase_shift": float(self.line_edit_phase_shift.text()),
+                    "resolution": int(self.line_edit_resolution.text()),
+                    "color": COLOR_DICT[self.color_combobox.currentText()],
+                    "width": int(self.combobox_width.currentText())}
         self.plot_lissajous_figure(settings)
 
-    def save_button_click_handler(self):
-        """Обработчик нажатия на кнопку 'Сохранить фигуру'."""
+    @QtCore.pyqtSlot()
+    def handle_click_on_button_save(self):
+        """
+        Обработчик нажатия на кнопку 'Сохранить фигуру'.
+        """
 
-        # Определяем имя файла, куда сохранить фигуру
-        filename, extension = qt.QFileDialog.getSaveFileName(
-            self, 'Сохранение изображения', DIR,
-            'PNG(*.png);;JPEG(*.jpg *.jpeg);;All Files(*)')
-        # Определяем расширение файла
-        if extension == 'PNG(*.png)':
-            extension = 'png'
-        elif extension == 'JPEG(*.jpg *.jpeg)':
-            extension = 'jpg'
+        filename, extension = qt.QFileDialog.getSaveFileName(self, "Сохранение изображения", DIR,
+                                                             "PNG(*.png);;JPEG(*.jpg *.jpeg)")
+        if extension == "PNG(*.png)":
+            extension = "png"
+        elif extension == "JPEG(*.jpg *.jpeg)":
+            extension = "jpg"
         # Если не указано имя или расширение неверное, не сохраняем фигуру
-        if filename == '' or extension not in ('png', 'jpg'):
+        if filename == "" or extension not in ("png", "jpg"):
             return
         self._fig.savefig(filename, format=extension)
 
+    def plot_lissajous_figure(self, settings: Dict[str, Union[float, str]] = DEFAULT_SETTINGS):
+        """
+        Метод рисует фигуру Лиссажу.
+        """
+
+        self._generator.set_resolution(settings["resolution"])
+        figure = self._generator.generate_figure(settings["freq_x"], settings["freq_y"], settings["phase_shift"])
+        self._ax.clear()
+        self._ax.plot(figure.x_arr, figure.y_arr, color=settings["color"], linewidth=settings["width"])
+        plt.axis("off")
+        plt.tight_layout()
+        self._canvas.draw()
+
 
 if __name__ == "__main__":
-
-    # Инициализируем приложение Qt
     app = qt.QApplication(sys.argv)
-    # Создаём и настраиваем главное окно
-    main_window = Lissajous_window()
-    # Показываем окно
+    main_window = LissajousWindow()
     main_window.show()
-
-    # Запуск приложения
-    # На этой строке выполнение основной программы блокируется
-    # до тех пор, пока пользователь не закроет окно.
-    # Вся дальнейшая работа должна вестись либо в отдельных потоках,
-    # либо в обработчиках событий Qt.
     sys.exit(app.exec_())
