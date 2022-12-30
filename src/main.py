@@ -10,7 +10,7 @@ from lissajousgen import LissajousGenerator
 from version import VERSION
 
 
-class LissajousWindow(qt.QWidget):
+class LissajousWindow(qt.QMainWindow):
     """
     Класс для главного окна приложения.
     """
@@ -106,7 +106,9 @@ class LissajousWindow(qt.QWidget):
         h_box = qt.QHBoxLayout()
         h_box.addWidget(self._canvas, 1)
         h_box.addLayout(v_box)
-        self.setLayout(h_box)
+        widget = qt.QWidget()
+        widget.setLayout(h_box)
+        self.setCentralWidget(widget)
 
     @QtCore.pyqtSlot()
     def handle_click_on_button_plot(self) -> None:
