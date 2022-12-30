@@ -10,26 +10,20 @@ from lissajousgen import LissajousGenerator
 from version import VERSION
 
 
-# Путь к директории с исходным кодом
-DIR = os.path.dirname(os.path.realpath(__file__))
-
-# Настройки фигуры по умолчанию
-DEFAULT_SETTINGS = {"freq_x": 2,
-                    "freq_y": 3,
-                    "resolution": 100,
-                    "phase_shift": 0,
-                    "color": "midnightblue",
-                    "width": 2}
-
-# Цвета для matplotlib
-with open(os.path.join(DIR, "mpl.json"), mode="r", encoding="utf-8") as file:
-    COLOR_DICT = json.load(file)
-
-
 class LissajousWindow(qt.QWidget):
     """
     Класс для главного окна приложения.
     """
+
+    DEFAULT_SETTINGS: Dict[str, Union[float, str]] = {"freq_x": 2,
+                                                      "freq_y": 3,
+                                                      "resolution": 100,
+                                                      "phase_shift": 0,
+                                                      "color": "midnightblue",
+                                                      "width": 2}
+    DIR: str = os.path.dirname(os.path.realpath(__file__))
+    with open(os.path.join(DIR, "mpl.json"), mode="r", encoding="utf-8") as file:
+        COLOR_DICT = json.load(file)
 
     def __init__(self) -> None:
         super().__init__()
@@ -45,32 +39,32 @@ class LissajousWindow(qt.QWidget):
 
         form_layout = qt.QFormLayout()
         self.line_edit_freq_x: qt.QLineEdit = qt.QLineEdit()
-        self.line_edit_freq_x.setText(str(DEFAULT_SETTINGS["freq_x"]))
+        self.line_edit_freq_x.setText(str(self.DEFAULT_SETTINGS["freq_x"]))
         validator = QtGui.QRegExpValidator(QtCore.QRegExp(r"[0-9]*[\.]?[0-9]*"))
         self.line_edit_freq_x.setValidator(validator)
         form_layout.addRow(qt.QLabel("Частота X"), self.line_edit_freq_x)
 
         self.line_edit_freq_y: qt.QLineEdit = qt.QLineEdit()
-        self.line_edit_freq_y.setText(str(DEFAULT_SETTINGS["freq_y"]))
+        self.line_edit_freq_y.setText(str(self.DEFAULT_SETTINGS["freq_y"]))
         self.line_edit_freq_y.setValidator(validator)
         form_layout.addRow(qt.QLabel("Частота Y"), self.line_edit_freq_y)
 
         self.line_edit_phase_shift: qt.QLineEdit = qt.QLineEdit()
-        self.line_edit_phase_shift.setText(str(DEFAULT_SETTINGS["phase_shift"]))
+        self.line_edit_phase_shift.setText(str(self.DEFAULT_SETTINGS["phase_shift"]))
         self.line_edit_phase_shift.setValidator(validator)
         form_layout.addRow(qt.QLabel("Сдвиг фаз"), self.line_edit_phase_shift)
 
         self.line_edit_resolution: qt.QLineEdit = qt.QLineEdit()
-        self.line_edit_resolution.setText(str(DEFAULT_SETTINGS["resolution"]))
+        self.line_edit_resolution.setText(str(self.DEFAULT_SETTINGS["resolution"]))
         validator = QtGui.QRegExpValidator(QtCore.QRegExp("[1-9][0-9]*"))
         self.line_edit_resolution.setValidator(validator)
         form_layout.addRow(qt.QLabel("Количество точек"), self.line_edit_resolution)
 
         self.color_combobox = qt.QComboBox()
-        self.color_combobox.addItems(COLOR_DICT.keys())
+        self.color_combobox.addItems(self.COLOR_DICT.keys())
         color = ""
-        for key, value in COLOR_DICT.items():
-            if value == DEFAULT_SETTINGS["color"]:
+        for key, value in self.COLOR_DICT.items():
+            if value == self.DEFAULT_SETTINGS["color"]:
                 color = key
                 break
         self.color_combobox.setCurrentText(color)
@@ -78,7 +72,7 @@ class LissajousWindow(qt.QWidget):
 
         self.combobox_width = qt.QComboBox()
         self.combobox_width.addItems(list(map(str, range(1, 5))))
-        self.combobox_width.setCurrentText(str(DEFAULT_SETTINGS["width"]))
+        self.combobox_width.setCurrentText(str(self.DEFAULT_SETTINGS["width"]))
         form_layout.addRow(qt.QLabel("Толщина линии"), self.combobox_width)
 
         group = qt.QGroupBox("Параметры фигуры Лиссажу")
@@ -91,7 +85,7 @@ class LissajousWindow(qt.QWidget):
         """
 
         self.setWindowTitle(f"Генератор фигур Лиссажу. Версия {VERSION}")
-        self.setWindowIcon(QtGui.QIcon(os.path.join(DIR, "icon.bmp")))
+        self.setWindowIcon(QtGui.QIcon(os.path.join(self.DIR, "icon.bmp")))
 
         self.button_plot: qt.QPushButton = qt.QPushButton("Обновить фигуру")
         self.button_plot.clicked.connect(self.handle_click_on_button_plot)
@@ -124,7 +118,7 @@ class LissajousWindow(qt.QWidget):
                     "freq_y": float(self.line_edit_freq_y.text()),
                     "phase_shift": float(self.line_edit_phase_shift.text()),
                     "resolution": int(self.line_edit_resolution.text()),
-                    "color": COLOR_DICT[self.color_combobox.currentText()],
+                    "color": self.COLOR_DICT[self.color_combobox.currentText()],
                     "width": int(self.combobox_width.currentText())}
         self.plot_lissajous_figure(settings)
 
@@ -134,7 +128,7 @@ class LissajousWindow(qt.QWidget):
         Обработчик нажатия на кнопку 'Сохранить фигуру'.
         """
 
-        filename, extension = qt.QFileDialog.getSaveFileName(self, "Сохранение изображения", DIR,
+        filename, extension = qt.QFileDialog.getSaveFileName(self, "Сохранение изображения", self.DIR,
                                                              "PNG(*.png);;JPEG(*.jpg *.jpeg)")
         if extension == "PNG(*.png)":
             extension = "png"
