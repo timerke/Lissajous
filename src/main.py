@@ -4,7 +4,7 @@ import sys
 from typing import Dict, Union
 import matplotlib.pyplot as plt
 import PyQt5.QtWidgets as qt
-from matplotlib.backends.backend_qt5agg import FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5 import QtCore, QtGui
 from lissajousgen import LissajousGenerator
 from version import VERSION
