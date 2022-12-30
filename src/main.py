@@ -37,7 +37,7 @@ class LissajousWindow(qt.QWidget):
         self._init_ui()
         self.plot_lissajous_figure()
 
-    def _create_form_layout(self):
+    def _create_form_layout(self) -> qt.QGroupBox:
         """
         Метод создает форму с полями, регулирующими фигуру Лиссажу.
         :return: форма с полями.
@@ -129,7 +129,7 @@ class LissajousWindow(qt.QWidget):
         self.plot_lissajous_figure(settings)
 
     @QtCore.pyqtSlot()
-    def handle_click_on_button_save(self):
+    def handle_click_on_button_save(self) -> None:
         """
         Обработчик нажатия на кнопку 'Сохранить фигуру'.
         """
@@ -145,7 +145,7 @@ class LissajousWindow(qt.QWidget):
             return
         self._fig.savefig(filename, format=extension)
 
-    def plot_lissajous_figure(self, settings: Dict[str, Union[float, str]] = DEFAULT_SETTINGS):
+    def plot_lissajous_figure(self, settings: Dict[str, Union[float, str]] = DEFAULT_SETTINGS) -> None:
         """
         Метод рисует фигуру Лиссажу.
         """
