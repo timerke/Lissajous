@@ -85,7 +85,7 @@ class LissajousWindow(qt.QMainWindow):
         """
 
         self.setWindowTitle(f"Генератор фигур Лиссажу. Версия {VERSION}")
-        self.setWindowIcon(QtGui.QIcon(os.path.join(self.DIR, "icon.bmp")))
+        self.setWindowIcon(QtGui.QIcon(os.path.join(self.DIR, "icon.png")))
 
         self.button_plot: qt.QPushButton = qt.QPushButton("Обновить фигуру")
         self.button_plot.clicked.connect(self.handle_click_on_button_plot)
